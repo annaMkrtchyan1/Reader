@@ -2,6 +2,7 @@ package com.example.reader_epub.presentation.reader
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reader_epub.Logger
 import com.example.reader_epub.data.local.ReadingProgress
 import com.example.reader_epub.domain.EpubRepository
 import com.example.reader_epub.domain.ProgressRepository
@@ -25,6 +26,7 @@ class ReaderViewModel @Inject constructor(
     fun loadBook(file: File) {
         viewModelScope.launch {
             try {
+                Logger.log("Начло загрузки книги")
                 val book = epubRepository.parseEpub(file)
                 val progress = progressRepository.getProgress(book.id) ?: ReadingProgress(
                     book.id,
@@ -32,14 +34,17 @@ class ReaderViewModel @Inject constructor(
                     0,
                     System.currentTimeMillis()
                 )
+                Logger.log("Книга загружена")
                 _uiState.value = ReaderState.Success(book, progress.chapterIndex, progress.scrollY)
             } catch (_: Exception) {
+                Logger.log("Ошибка загрузки книги")
                 _uiState.value = ReaderState.Error("Произошла ошибка")
             }
         }
     }
 
     fun saveProgress(bookId: String, chapterIndex: Int, scrollY: Int) {
+        Logger.log("Сохранение прогресса чтения")
         viewModelScope.launch {
             progressRepository.saveProgress(
                 ReadingProgress(
@@ -53,6 +58,7 @@ class ReaderViewModel @Inject constructor(
     }
 
     fun nextChapter(bookId: String) {
+        Logger.log("Следующая страница")
         val currentState = _uiState.value
         if (currentState is ReaderState.Success) {
             if (currentState.currentChapterIndex < currentState.book.chapters.size - 1) {
@@ -64,6 +70,7 @@ class ReaderViewModel @Inject constructor(
     }
 
     fun previousChapter(bookId: String) {
+        Logger.log("Предыдущая страница")
         val currentState = _uiState.value
         if (currentState is ReaderState.Success) {
             if (currentState.currentChapterIndex > 0) {
